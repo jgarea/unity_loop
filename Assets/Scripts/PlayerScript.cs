@@ -11,14 +11,18 @@ public class PlayerScript : MonoBehaviour
     private Animator animator;
     public bool isWalking = false;
     [SerializeField] private FloatingDamage floatingDamagePrefab;
-    [SerializeField] private Canvas targetCanvas; // Arrastra el Canvas aquí en el inspector
+    [SerializeField] private Canvas targetCanvas;
     public MenuSystem menuSystem;
 
     public GameObject NPotion;
+    public PowerUps PowerUps;
     private bool recibiendoDanio = false;
     private int vida;
+    private int vidaMaxima = 12;
     private int constitucion;
-    private int fuerza;
+    public int fuerza;
+    private int nPotion;
+    public int nPotionMax;
 
     private bool muerto = false;
     private bool muerteAnimada = false;
@@ -27,28 +31,30 @@ public class PlayerScript : MonoBehaviour
     private float attackCooldown = 10.0f;
     private float attackTimer = 0.0f;
     private bool firstAttack = true;
+    private bool firstCollision = true;
 
     private float tiempoUltimaPulsacion = 0f;
     private float cooldown = 1f; // tiempo en segundos entre pulsaciones permitidas
 
     void Start()
     {
-        //floatingDamagePrefab = GameObject.FindWithTag("Danio");
-        //vida inicial = 12 + constitucion
         constitucion = 3;
         vida = 12 + constitucion;
+        vidaMaxima = vida;
         fuerza = 16;
         animator = GetComponent<Animator>();
+        nPotion = 2;
+        nPotionMax = 2;
     }
 
     // Update is called once per frame
     void Update()
     {
         string text = NPotion.GetComponent<TextMeshProUGUI>().text;
-        int nPotion;
+
         if (int.TryParse(text, out nPotion))
         {
-            // Ahora nPotion contiene el valor entero convertido de text  
+            NPotion.GetComponent<TextMeshProUGUI>().text = nPotion.ToString();
         }
         else
         {
@@ -76,13 +82,17 @@ public class PlayerScript : MonoBehaviour
             animator.SetBool("isStart", isWalking);
             animator.SetBool("isWalking", isWalking);
         }
-        if (Input.GetKey(KeyCode.UpArrow) && Time.time - tiempoUltimaPulsacion > cooldown && nPotion>0)
+        if (Input.GetKey(KeyCode.UpArrow) && Time.time - tiempoUltimaPulsacion > cooldown && nPotion > 0)
         {
             playerSoundController.PlayBeberPocionSound();
             nPotion--;
             NPotion.GetComponent<TextMeshProUGUI>().text = nPotion.ToString();
             tiempoUltimaPulsacion = Time.time;
             vida += 5;
+            if (vida > vidaMaxima)
+            {
+                vida = vidaMaxima;
+            }
             Canvas mainCanvas = FindObjectOfType<Canvas>(); // Solo si hay un único Canvas  
             FloatingDamage dmgObj = Instantiate(floatingDamagePrefab, mainCanvas.transform);
 
@@ -118,6 +128,26 @@ public class PlayerScript : MonoBehaviour
     }
     private void OnTriggerEnter2D(Collider2D collision)
     {
+        if (collision.CompareTag("Estatua"))
+        {
+            if (firstCollision)
+            {
+                firstCollision = false;
+            }
+            else
+            {
+                isWalking = false;
+                animator.SetBool("isWalking", isWalking);
+
+                getPotion();
+
+                //Espera 2 segundos y activa el power up
+                StartCoroutine(EsperarPowerUp());
+
+                firstCollision = true;
+            }
+        }
+
         if (collision.CompareTag("EspadaEsqueleto"))
         {
             //Vector2 direccionDanio = new Vector2(collision.gameObject.transform.position.x,0);
@@ -125,6 +155,33 @@ public class PlayerScript : MonoBehaviour
             EnemyScript enemyScript = collision.gameObject.GetComponentInParent<EnemyScript>();
 
             RecibeDanio(enemyScript.getDanio());
+        }
+    }
+
+    private IEnumerator EsperarPowerUp()
+    {
+        // Espera 2 segundos y activa el power up
+
+        yield return new WaitForSeconds(1f);
+        PowerUps.AplicarPowerUpAleatorio();
+    }
+
+    private void getPotion()
+    {
+
+        if (nPotion >= nPotionMax)
+        {
+            nPotion = nPotionMax;
+        }
+        else
+        {
+            int dif = nPotionMax - nPotion;
+            nPotion = nPotionMax;
+            NPotion.GetComponent<TextMeshProUGUI>().text = nPotion.ToString();
+
+
+            UnityEngine.Color color = UnityEngine.Color.yellow;
+            mostrarAumentar(dif.ToString(), color);
         }
     }
 
@@ -139,7 +196,7 @@ public class PlayerScript : MonoBehaviour
             float porcentaje = (float)cantDanio / vida;
             UnityEngine.Color color = porcentaje >= 0.2f ? UnityEngine.Color.red : UnityEngine.Color.white;
             //Debug.Log(floatingDamagePrefab);
-            Canvas mainCanvas = FindObjectOfType<Canvas>(); // Solo si hay un único Canvas
+            Canvas mainCanvas = FindObjectOfType<Canvas>();
             FloatingDamage dmgObj = Instantiate(floatingDamagePrefab, mainCanvas.transform);
             //dmgObj.transform.position = Camera.main.WorldToScreenPoint(transform.position + Vector3.up);
 
@@ -148,30 +205,13 @@ public class PlayerScript : MonoBehaviour
             dmgObj.GetComponent<FloatingDamage>().SetVisible();
 
             vida -= cantDanio;
-            
+
             if (vida <= 0)
             {
                 muerto = true;
-                
-                // Aquí puedes agregar la lógica para manejar la muerte del jugador
-                //Debug.Log("El jugador ha muerto");
+
             }
-            else
-            {
-                // Aquí puedes agregar la lógica para manejar el daño recibido por el jugador
-                //Debug.Log("El jugador ha recibido daño" + cantDanio);
-            }
-            //vida -= cantDanio;
-            //if (vida <= 0)
-            //{
-            //    // Aquí puedes agregar la lógica para manejar la muerte del jugador
-            //    Debug.Log("El jugador ha muerto");
-            //}
-            //else
-            //{
-            //    // Aquí puedes agregar la lógica para manejar el daño recibido por el jugador
-            //    Debug.Log("El jugador ha recibido daño");
-            //}
+
         }
     }
 
@@ -196,7 +236,7 @@ public class PlayerScript : MonoBehaviour
     public int getDanio()
     {
         //1d20 + fuerza 3
-        int danioFuerza= (fuerza -10)/2;
+        int danioFuerza = (fuerza - 10) / 2;
         return UnityEngine.Random.Range(1, 12) + danioFuerza;
     }
     public void doAttack()
@@ -221,5 +261,60 @@ public class PlayerScript : MonoBehaviour
     public bool isMuerto()
     {
         return muerto;
+    }
+
+    internal void ActivarRegeneracion()
+    {
+        StartCoroutine(RegenerarVida());
+    }
+
+    private IEnumerator RegenerarVida()
+    {
+        while (true)
+        {
+            vida += 1;
+
+            if (vida > vidaMaxima)
+            {
+                vida = vidaMaxima;
+            }
+            UnityEngine.Color color = UnityEngine.Color.green;
+            mostrarAumentar("1", color);
+
+            yield return new WaitForSeconds(10f); // Espera 10 segundos y vuelve a regenerar
+        }
+    }
+    public void aumentarConstitucion()
+    {
+        constitucion++;
+        vidaMaxima += 1;
+        vida += 1;
+        if (vida > vidaMaxima)
+        {
+            vida = vidaMaxima;
+        }
+
+    }
+
+    private void mostrarAumentar(string vida, UnityEngine.Color color)
+    {
+
+        Canvas mainCanvas = FindObjectOfType<Canvas>();
+        FloatingDamage dmgObj = Instantiate(floatingDamagePrefab, mainCanvas.transform);
+
+        dmgObj.GetComponent<FloatingDamage>().SetText("+" + vida, color);
+        dmgObj.SetPosition(transform.position);
+        dmgObj.GetComponent<FloatingDamage>().SetVisible();
+    }
+
+    public void mostrarMensaje(string mensajePowerUp)
+    {
+        Canvas mainCanvas = FindObjectOfType<Canvas>();
+        FloatingDamage dmgObj = Instantiate(floatingDamagePrefab, mainCanvas.transform);
+        //dmgObj.transform.position = Camera.main.WorldToScreenPoint(transform.position + Vector3.up);
+
+        dmgObj.GetComponent<FloatingDamage>().SetText(mensajePowerUp, UnityEngine.Color.magenta);
+        dmgObj.SetPosition(transform.position);
+        dmgObj.GetComponent<FloatingDamage>().SetVisible();
     }
 }

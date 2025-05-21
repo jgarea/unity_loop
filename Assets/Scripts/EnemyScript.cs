@@ -2,8 +2,8 @@ using UnityEngine;
 
 public class EnemyScript : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-   
+
+
     public float speed = 2.0f;
     public float stoppingDistance = 1.5f;
     private bool recibiendoDanio = false;
@@ -23,12 +23,12 @@ public class EnemyScript : MonoBehaviour
     private bool muerto = false;
     void Start()
     {
-        
+
         player = GameObject.FindGameObjectWithTag("Player");
-        
+
         vida = 50;
         playerScript = player.GetComponent<PlayerScript>();
-        
+
         animator = GetComponent<Animator>();
         rb = GetComponent<Rigidbody2D>();
     }
@@ -46,7 +46,7 @@ public class EnemyScript : MonoBehaviour
             playerScript.pararAtacar();
             playerScript.moverse();
             Destroy(gameObject, 1.0f);
-            
+
             return;
         }
         isStart = playerScript.isWalking;
@@ -69,12 +69,12 @@ public class EnemyScript : MonoBehaviour
                 doAttack();
                 attackTimer = 0.0f;
             }
-            
+
         }
 
         animator.SetBool("atacar", attack);
-        // Gestión del ataque
-        
+
+
     }
     private void OnTriggerEnter2D(Collider2D collision)
     {
@@ -91,12 +91,13 @@ public class EnemyScript : MonoBehaviour
             PlayerScript playerScript = collision.gameObject.GetComponentInParent<PlayerScript>();
             if (muerto)
             {
-                Debug.Log("Muerto" );
+                Debug.Log("Muerto");
                 playerScript.pararAtacar();
                 return;
 
             }
-            if (playerScript.isAttacking()) {
+            if (playerScript.isAttacking())
+            {
                 Debug.Log("Recibe danio");
                 RecibeDanio(playerScript.getDanio());
             }
@@ -104,8 +105,8 @@ public class EnemyScript : MonoBehaviour
             {
                 playerScript.doAttack();
             }
-            
-            
+
+
         }
     }
 
@@ -133,12 +134,7 @@ public class EnemyScript : MonoBehaviour
     public void RecibeDanio(int cantDanio)
     {
         Debug.Log("Recibe danio" + cantDanio);
-        //if (!recibiendoDanio)
-        //{
-        //    recibiendoDanio = true;
-        //    animator.SetBool("getDmg", recibiendoDanio);
 
-        // Instanciar daño flotante
         float porcentaje = (float)cantDanio / vida;
         Color color = porcentaje >= 0.2f ? Color.red : Color.white;
         //Debug.Log(floatingDamagePrefab);
@@ -152,30 +148,19 @@ public class EnemyScript : MonoBehaviour
 
         vida -= cantDanio;
 
-            if (vida <= 0)
-            {
-                muerto = true;
+        if (vida <= 0)
+        {
+            muerto = true;
 
-                // Aquí puedes agregar la lógica para manejar la muerte del jugador
-                Debug.Log("El enemigo ha muerto");
-            }
-            else
-            {
-                // Aquí puedes agregar la lógica para manejar el daño recibido por el jugador
-                Debug.Log("El enemigo ha recibido daño" + cantDanio);
-            }
-            //vida -= cantDanio; b
-            //if (vida <= 0)
-            //{
-            //    // Aquí puedes agregar la lógica para manejar la muerte del jugador
-            //    Debug.Log("El jugador ha muerto");
-            //}
-            //else
-            //{
-            //    // Aquí puedes agregar la lógica para manejar el daño recibido por el jugador
-            //    Debug.Log("El jugador ha recibido daño");
-            //}
-        //}
+
+            Debug.Log("El enemigo ha muerto");
+        }
+        else
+        {
+
+            Debug.Log("El enemigo ha recibido daño" + cantDanio);
+        }
+
     }
 
     public void doAttack()

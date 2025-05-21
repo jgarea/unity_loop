@@ -9,6 +9,7 @@ TagManager:
   - Danio
   - Canvas
   - EspadaHeroe
+  - Estatua
   layers:
   - Default
   - TransparentFX

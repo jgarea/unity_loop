@@ -2,9 +2,9 @@ using UnityEngine;
 
 public class PlayerSoundController : MonoBehaviour
 {
-    public AudioSource audioSource; // Reference to the AudioSource component
+    public AudioSource audioSource; 
     public AudioClip beberPocion;
-   
+    public AudioClip boton;
     public void PlayBeberPocionSound()
     {
         if (audioSource != null && beberPocion != null)
@@ -17,5 +17,16 @@ public class PlayerSoundController : MonoBehaviour
             Debug.LogWarning("AudioSource or AudioClip is not assigned.");
         }
     }
-
+    public void PlayBotonSound()
+    {
+        if (audioSource != null && boton != null)
+        {
+            audioSource.PlayOneShot(boton, 0.5f);
+        }
+        else
+        {
+            Debug.LogWarning("AudioSource or AudioClip is not assigned.");
+        }
+    }
+    
 }

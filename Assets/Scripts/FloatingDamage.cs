@@ -5,7 +5,7 @@ public class FloatingDamage : MonoBehaviour
 {
     public TextMeshProUGUI damageText;
     public float floatSpeed = 1f;
-    public float duration = 2f;
+    public float duration = 3f;
     private RectTransform rectTransform;
     private Vector3 worldPosition;
 
@@ -36,5 +36,6 @@ public class FloatingDamage : MonoBehaviour
         worldPosition = position;
         transform.Translate(position);
     }
+
     
 }
